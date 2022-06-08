@@ -2,19 +2,21 @@ import numpy as np
 from scipy.integrate import dblquad
 from .history import History
 
-class Integral_Preisach():
-    def __init__(self, mu, bounds):
-
-        self.mu = mu
-        self.bounds = tuple(bounds)
-        self.__history_object = History()
+### FACTORING OUT HISTORY MANAGEMENT (it's the same for all simple Preisach models)
+class History_primitive():
+    def __init__(self):
+        self.history_object = History()
 
     @property
     def history(self):
-        return self.__history_object.value
+        return self.history_object.value
+
+    @history.setter
+    def history(self, hist_list):
+        self.history_object.value = hist_list
 
     def reset_history(self):
-        self.__history_object.reset()
+        self.history_object.reset()
 
     def generate_hysteron_state_function(self):
         hist = self.history
@@ -40,6 +42,13 @@ class Integral_Preisach():
 
             return delta
 
+# INTEGRAL-BASED IMPLEMENTATION (it slo)
+class Integral_Preisach(History_primitive):
+    def __init__(self, mu, bounds):
+
+        self.mu = mu
+        self.bounds = tuple(bounds)
+        self.history_object = History()
 
     def make_integrand_bound_functions(self):
         hist = self.history
@@ -101,7 +110,7 @@ class Integral_Preisach():
 
 
     def to_value(self, V):
-        self.__history_object.update(V)
+        self.history_object.update(V)
         return self.get_value()
 
     def make_flipping_front(self):
@@ -132,3 +141,69 @@ class Integral_Preisach():
                 corners = np.concatenate((corners, np.ones((1, 2))*corners[-1, -1]))
 
             return corners
+
+# SUM-BASED IMPLEMENTATION (it fast but it don't work)
+class Preisach(History_primitive):
+    def __init__(self, preisach_coords, measured_preisach_mesh, strict_f = False):
+        # centering the f values and saving the corresponding offset
+
+        offset = (np.max(measured_preisach_mesh) + np.min(measured_preisach_mesh))/2
+        measured_preisach_mesh = measured_preisach_mesh - offset
+        self.measured_preisach_mesh = measured_preisach_mesh
+        self.preisach_coords = preisach_coords
+        self.offset = offset
+
+        self.f = self.generate_model(preisach_coords, measured_preisach_mesh, strict_f)
+        self.history_object = History() # this will be a n by 2 array . history[i, :] = [M_i, m_i]
+        self.f_plus = self.f(self.model_bounds[-1], self.model_bounds[-1])
+
+    def generate_model(self, preisach_coords, measured_preisach_mesh, strict_f):
+        """Interpolates the $f_{\alpha, \beta}$ function from measurements and returns it."""
+        alpha_values = preisach_coords[:, 0]
+        beta_values = preisach_coords[:, 1]
+
+        min_u = np.min(alpha_values)
+        max_u = np.max(alpha_values)
+        self.model_bounds = np.array([min_u, max_u])
+
+        interpolated_mesh = interp2d(alpha_values, beta_values, measured_preisach_mesh, kind = "cubic")
+
+        if strict_f :
+            def mesh(alpha, beta):
+                if alpha < beta or not(np.all(min_u <= np.array([alpha, beta]))) or not(np.all(max_u >= np.array([alpha, beta]))):
+                    raise ValueError("Preisach function called outside Preisach triangle.")
+                else :
+                    return interpolated_mesh(alpha, beta)
+        else :
+            mesh = interpolated_mesh
+
+        mesh = np.vectorize(mesh)
+
+        return mesh
+
+    def get_value(self, **kwargs):
+
+        f = self.f
+
+        if "history" in kwargs.keys():
+            hist = kwargs["history"]
+        else :
+            hist = self.history
+
+        max_values = hist[:, 0] # the list of M_k values
+        mins_k = hist[:, 0] # the list of m_k values
+        mins_km1 = np.roll(mins_k, 1) # roll it, and then
+        mins_km1[0] = self.model_bounds[0] # ... set a value for m_0 to get the list of k_{-1}
+
+        terms = f(max_values, mins_k) - f(max_values, mins_km1)
+
+        return self.offset - self.f_plus + np.sum(terms)
+
+    def to_value(self, V):
+        self.history_object.update(V)
+        return self.get_value()
+
+    def plot_mesh(self, **kwargs):
+        beta = self.preisach_coords[:, 1]
+        alpha = self.preisach_coords[:, 0]
+        plt.tripcolor(beta, alpha, self.f(alpha, beta), **kwargs)
