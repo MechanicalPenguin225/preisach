@@ -1,6 +1,6 @@
 import numpy as np
 from scipy.integrate import dblquad
-from scipy.interpolate import bisplrep, bisplev
+from scipy.interpolate import bisplrep, bisplev, LinearNDInterpolator, CloughTocher2DInterpolator
 from .history import History
 
 ### FACTORING OUT HISTORY MANAGEMENT (it's the same for all simple Preisach models)
@@ -147,7 +147,7 @@ class Integral_Preisach(History_primitive):
 
 # SUM-BASED IMPLEMENTATION (it fast but it don't work)
 class Preisach(History_primitive):
-    def __init__(self, preisach_coords, measured_preisach_mesh, strict_f = False):
+    def __init__(self, preisach_coords, measured_preisach_mesh, second_order = True):
         # centering the f values and saving the corresponding offset
 
         offset = (np.max(measured_preisach_mesh) + np.min(measured_preisach_mesh))/2
@@ -158,41 +158,17 @@ class Preisach(History_primitive):
 
         self.bounds = (np.min(preisach_coords), np.max(preisach_coords))
 
-        self.f = self.generate_model(preisach_coords, measured_preisach_mesh, strict_f)
+        self.f = self.generate_model(preisach_coords, measured_preisach_mesh, second_order)
         self.history_object = History() # this will be a n by 2 array . history[i, :] = [M_i, m_i]
         self.f_plus = self.f(self.bounds[-1], self.bounds[-1])
 
-    def generate_model(self, preisach_coords, measured_preisach_mesh, strict_f = True):
+    def generate_model(self, preisach_coords, measured_preisach_mesh, second_order):
         """Interpolates the $f_{\alpha, \beta}$ function from measurements and returns it."""
-        alpha_values = preisach_coords[:, 0]
-        beta_values = preisach_coords[:, 1]
 
-        min_u = np.min(alpha_values)
-        max_u = np.max(alpha_values)
-        self.model_bounds = self.bounds
-
-        spline_representation = bisplrep(alpha_values, beta_values, measured_preisach_mesh, kx = 1, ky = 1)
-        def interpolated_mesh(x, y):
-            if x > max_u :
-                x = max_u
-
-            if y < min_u :
-                y = min_u
-
-            return bisplev(x, y, spline_representation)
-
-        if strict_f :
-            def mesh(alpha, beta):
-                if alpha < beta :
-                    raise ValueError(f"Preisach function called outside Preisach triangle : {alpha}, {beta}")
-                else :
-                    return interpolated_mesh(alpha, beta)
+        if second_order :
+            return CloughTocher2DInterpolator(preisach_coords, measured_preisach_mesh)
         else :
-            mesh = interpolated_mesh
-
-        mesh = np.vectorize(mesh)
-
-        return mesh
+            return LinearNDInterpolator(preisach_coords, measured_preisach_mesh)
 
     def get_value(self, **kwargs):
 
@@ -206,7 +182,7 @@ class Preisach(History_primitive):
         max_values = hist[:, 0] # the list of M_k values
         mins_k = hist[:, 1] # the list of m_k values
         mins_km1 = np.roll(mins_k, 1) # roll it, and then
-        mins_km1[0] = self.model_bounds[0] # ... set a value for m_0 to get the list of k_{-1}
+        mins_km1[0] = self.bounds[0] # ... set a value for m_0 to get the list of k_{-1}
 
         terms = f_func(max_values, mins_k) - f_func(max_values, mins_km1)
 
