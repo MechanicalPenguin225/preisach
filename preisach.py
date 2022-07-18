@@ -171,7 +171,7 @@ class Preisach(History_primitive):
         max_u = np.max(alpha_values)
         self.model_bounds = self.bounds
 
-        spline_representation = bisplrep(alpha_values, beta_values, measured_preisach_mesh, kx = 5, ky = 5)
+        spline_representation = bisplrep(alpha_values, beta_values, measured_preisach_mesh, kx = 1, ky = 1)
         def interpolated_mesh(x, y):
             if x > max_u :
                 x = max_u
