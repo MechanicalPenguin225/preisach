@@ -1,6 +1,6 @@
 import numpy as np
 from scipy.integrate import dblquad
-from scipy.interpolate import bisplrep, bisplev, LinearNDInterpolator, CloughTocher2DInterpolator
+from scipy.interpolate import LinearNDInterpolator, CloughTocher2DInterpolator
 from .history import History
 
 ### FACTORING OUT HISTORY MANAGEMENT (it's the same for all simple Preisach models)
