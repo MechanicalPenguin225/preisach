@@ -162,13 +162,15 @@ class Preisach(History_primitive):
         self.history_object = History() # this will be a n by 2 array . history[i, :] = [M_i, m_i]
         self.f_plus = self.f(self.bounds[-1], self.bounds[-1])
 
-    def generate_model(self, preisach_coords, measured_preisach_mesh, second_order):
+    def generate_model(self, preisach_coords, mesh, second_order):
         """Interpolates the $f_{\alpha, \beta}$ function from measurements and returns it."""
 
         if second_order :
-            return CloughTocher2DInterpolator(preisach_coords, measured_preisach_mesh)
+            interpolant = CloughTocher2DInterpolator(preisach_coords, mesh)
+            return interpolant
         else :
-            return LinearNDInterpolator(preisach_coords, measured_preisach_mesh)
+            interpolant =  LinearNDInterpolator(preisach_coords, mesh)
+            return interpolant
 
     def get_value(self, **kwargs):
 
