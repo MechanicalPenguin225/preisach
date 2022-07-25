@@ -1,6 +1,6 @@
 import numpy as np
 from warnings import warn
-from .preisach import Preisach
+from .models import Preisach
 
 class Transducer(Preisach):
     def __init__(self, preisach_coords, measured_preisach_mesh, second_order = True, alpha = 0.9, tolerance = 10e6, convergence_limit = 500, gamma = None):
