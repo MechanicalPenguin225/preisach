@@ -43,7 +43,7 @@ class Transducer(Preisach):
             else :
                 counter += 1
 
-            delta_V_lin = delta_f / gamma
+            delta_V_lin = delta_f / self.gamma
             delta_V_lin_scaled = self.alpha*delta_V_lin
 
             current_f = self.to_value(self.current_input_value + delta_V_lin_scaled)
