@@ -19,6 +19,10 @@ class History_primitive():
     def reset_history(self):
         self.history_object.reset()
 
+    @property
+    def current_input_value(self):
+        return self.history[-1, -1]
+
     def generate_hysteron_state_function(self):
         hist = self.history
 
@@ -119,10 +123,9 @@ class History_primitive():
 # INTEGRAL-BASED IMPLEMENTATION (it slo)
 class Integral_Preisach(History_primitive):
     def __init__(self, mu, bounds):
-
+        super().__init__()
         self.mu = mu
         self.bounds = tuple(bounds)
-        self.history_object = History()
 
 
     def get_value(self):
@@ -149,7 +152,7 @@ class Integral_Preisach(History_primitive):
 class Preisach(History_primitive):
     def __init__(self, preisach_coords, measured_preisach_mesh, second_order = True):
         # centering the f values and saving the corresponding offset
-
+        super().__init__()
         offset = (np.max(measured_preisach_mesh) + np.min(measured_preisach_mesh))/2
         measured_preisach_mesh = measured_preisach_mesh - offset
         self.measured_preisach_mesh = measured_preisach_mesh
@@ -159,7 +162,6 @@ class Preisach(History_primitive):
         self.bounds = (np.min(preisach_coords), np.max(preisach_coords))
 
         self.f = self.generate_model(preisach_coords, measured_preisach_mesh, second_order)
-        self.history_object = History() # this will be a n by 2 array . history[i, :] = [M_i, m_i]
         self.f_plus = self.f(self.bounds[-1], self.bounds[-1])
 
     def generate_model(self, preisach_coords, mesh, second_order):
