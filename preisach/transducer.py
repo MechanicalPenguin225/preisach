@@ -1,6 +1,7 @@
 import numpy as np
 from warnings import warn
 from .models import Preisach
+from copy import deepcopy
 
 class Transducer(Preisach):
     def __init__(self, preisach_coords, measured_preisach_mesh, second_order = True, alpha = 0.9, tolerance = 10e6, convergence_limit = 500, gamma = None):
@@ -17,12 +18,17 @@ class Transducer(Preisach):
         else :
             self.gamma = gamma
 
+        if initial_value is None :
+            self.history_object.update(self.output_bounds[0]) # initializing at min possible voltage if no initial value is provided.
+        else :
+            self.history_object.update(initial_value) # else, initializing to that value.
+
     def check_validity(self, setpoint):
         if setpoint < self.output_bounds[0] :
-            warn("Preisach setpoint out of reachable values - too low.")
+            raise ValueError("Preisach setpoint out of reachable values - too low.")
             return self.output_bounds[0]
         elif setpoint > self.output_bounds[1]:
-            warn("Preisach setpoint out of reachable values - too high.")
+            raise ValueError("Preisach setpoint out of reachable values - too high.")
             return self.output_bounds[1]
         else :
             return setpoint
@@ -30,30 +36,42 @@ class Transducer(Preisach):
     def aim(self, setpoint):
         setpoint = self.check_validity(setpoint)
         f_start = self.get_value()
-        real_history = self.history
-        delta_V_final = 0.
+        real_history = deepcopy(self.history)
+        V_final = self.current_input_value
 
         counter = 0
-        delta_f = np.abs(f_start - setpoint)
+        initial_delta_f = setpoint - f_start
 
-        while delta_f >= tolerance :
+        delta_f = initial_delta_f
 
+        while np.abs(delta_f) >= self.tolerance :
             if counter > self.convergence_limit :
-                raise Error("Preisach failed to converge.")
+                raise ValueError("Preisach failed to converge.")
             else :
                 counter += 1
+
+            if delta_f*initial_delta_f < 0: # checking if we overshot, at which case we redo
+
+                prev_alpha = deepcopy(self.alpha)
+                self.alpha /= 2
+
+                self.history = real_history
+
+                ans = self.aim(setpoint)
+                self.alpha = prev_alpha
+
+                return ans
 
             delta_V_lin = delta_f / self.gamma
             delta_V_lin_scaled = self.alpha*delta_V_lin
 
-            current_f = self.to_value(self.current_input_value + delta_V_lin_scaled)
-            delta_f = np.abs(current_f - setpoint)
+            current_f = self.to_value(V_final + delta_V_lin_scaled)
+            delta_f = setpoint - current_f
 
-            delta_V_final += delta_V_lin_scaled
+            V_final += delta_V_lin_scaled
 
         self.history = real_history
-        next_voltage = delta_V_final + self.current_input_value
-        self.history_object.update(next_voltage)
-        return next_voltage
+        self.history_object.update(V_final)
+        return V_final
 
 
