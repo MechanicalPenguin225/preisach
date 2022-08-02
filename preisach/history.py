@@ -28,6 +28,7 @@ class History():
                 if h > V: # assuming hist is properly reduced, the first value we encounter that is > V is the last good value.
                     last_good_index = decreasing_index
                     hist[last_good_index + 1, :] = V # setting both values to V since min gets erased in the process.
+                    hist = hist[:last_good_index + 2, :]
                     break
             else : # if we never broke, it means that there is no good max (either we are higher than all of them, or there is just a single vector in the history and it's not good).
                 hist = np.array([[V, V]]) # since we start with max, we reset the whole thing.
