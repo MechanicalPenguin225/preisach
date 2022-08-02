@@ -169,10 +169,22 @@ class Preisach(History_primitive):
 
         if second_order :
             interpolant = CloughTocher2DInterpolator(preisach_coords, mesh)
-            return interpolant
+            def interpolant_err(x, y):
+                val = interpolant(x, y)
+                if np.isnan(val):
+                    raise ValueError(f"interpolant returned nan when called on {x}, {y}")
+                else :
+                    return val
+            return np.vectorize(interpolant_err)
         else :
             interpolant =  LinearNDInterpolator(preisach_coords, mesh)
-            return interpolant
+            def interpolant_err(x, y):
+                val = interpolant(x, y)
+                if np.isnan(val):
+                    raise ValueError(f"interpolant returned nan when called on {x}, {y}")
+                else :
+                    return val
+            return np.vectorize(interpolant_err)
 
     def get_value(self, **kwargs):
 
