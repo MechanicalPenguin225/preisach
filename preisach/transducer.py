@@ -5,7 +5,7 @@ from copy import deepcopy
 
 class Transducer(Preisach):
     def __init__(self, preisach_coords, measured_preisach_mesh, second_order = True, alpha = 0.9, tolerance = 10e6, convergence_limit = 500, gamma = None):
-        super().init(preisach_coords, measured_preisach_mesh, second_order)
+        super().__init__(preisach_coords, measured_preisach_mesh, second_order)
         self.alpha = alpha
         self.tolerance = tolerance
         self.output_bounds = (np.min(measured_preisach_mesh), np.max(measured_preisach_mesh))
