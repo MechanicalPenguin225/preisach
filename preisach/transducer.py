@@ -4,7 +4,7 @@ from .models import Preisach
 from copy import deepcopy
 
 class Transducer(Preisach):
-    def __init__(self, preisach_coords, measured_preisach_mesh, second_order = True, alpha = 0.9, tolerance = 10e6, convergence_limit = 500, gamma = None):
+    def __init__(self, preisach_coords, measured_preisach_mesh, second_order = True, alpha = 0.9, tolerance = 10e6, convergence_limit = 500, gamma = None, initial_value = None):
         super().__init__(preisach_coords, measured_preisach_mesh, second_order)
         self.alpha = alpha
         self.tolerance = tolerance
