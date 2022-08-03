@@ -19,7 +19,7 @@ class Transducer(Preisach):
             self.gamma = gamma
 
         if initial_value is None :
-            self.history_object.update(self.output_bounds[0]) # initializing at min possible voltage if no initial value is provided.
+            self.history_object.update(self.bounds[0]) # initializing at min possible voltage if no initial value is provided.
         else :
             self.history_object.update(initial_value) # else, initializing to that value.
 
@@ -43,6 +43,7 @@ class Transducer(Preisach):
         initial_delta_f = setpoint - f_start
 
         delta_f = initial_delta_f
+        print(delta_f/self.tolerance, self.tolerance)
 
         while np.abs(delta_f) >= self.tolerance :
             if counter > self.convergence_limit :
@@ -54,6 +55,8 @@ class Transducer(Preisach):
 
                 prev_alpha = deepcopy(self.alpha)
                 self.alpha /= 2
+
+               # print(f"Overshot. New alpha = {self.alpha}")
 
                 self.history = real_history
 
