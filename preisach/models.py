@@ -148,7 +148,7 @@ class Integral_Preisach(History_primitive):
         self.history_object.update(V)
         return self.get_value()
 
-# SUM-BASED IMPLEMENTATION (it fast but it don't work)
+# SUM-BASED IMPLEMENTATION (it fast **and** it works now !)
 class Preisach(History_primitive):
     def __init__(self, preisach_coords, measured_preisach_mesh, second_order = True):
         # centering the f values and saving the corresponding offset
@@ -169,22 +169,19 @@ class Preisach(History_primitive):
 
         if second_order :
             interpolant = CloughTocher2DInterpolator(preisach_coords, mesh)
-            def interpolant_err(x, y):
-                val = interpolant(x, y)
-                if np.isnan(val):
-                    raise ValueError(f"interpolant returned nan when called on {x}, {y}")
-                else :
-                    return val
-            return np.vectorize(interpolant_err)
+
         else :
             interpolant =  LinearNDInterpolator(preisach_coords, mesh)
-            def interpolant_err(x, y):
-                val = interpolant(x, y)
-                if np.isnan(val):
-                    raise ValueError(f"interpolant returned nan when called on {x}, {y}")
-                else :
-                    return val
-            return np.vectorize(interpolant_err)
+
+        @np.vectorize
+        def interpolant_err(x, y):
+            val = interpolant(x, y)
+            if np.isnan(val):
+                raise ValueError(f"interpolant returned nan when called on {x}, {y}. History is {self.history}")
+            else :
+                return val
+
+        return interpolant_err
 
     def get_value(self, **kwargs):
 
