@@ -43,7 +43,6 @@ class Transducer(Preisach):
         initial_delta_f = setpoint - f_start
 
         delta_f = initial_delta_f
-        print(delta_f/self.tolerance, self.tolerance)
 
         while np.abs(delta_f) >= self.tolerance :
             if counter > self.convergence_limit :
