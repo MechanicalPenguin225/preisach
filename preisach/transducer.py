@@ -39,6 +39,8 @@ class Transducer(Preisach):
         real_history = deepcopy(self.history)
         V_final = self.current_input_value
 
+        clipped = False # whether we clipped in a previos step.
+
         counter = 0
         initial_delta_f = setpoint - f_start
 
@@ -63,14 +65,19 @@ class Transducer(Preisach):
                 self.alpha = prev_alpha
 
                 return ans
+            elif clipped : # if we already clipped once and neither overshot nor satisfied the preicision conditions, we're screwed. Best thing we can do is throw a warning and return the clipped value anyway.
+                warn("Clipped value to model bound. Precision was not met.")
+                break
 
             delta_V_lin = delta_f / self.gamma
             delta_V_lin_scaled = self.alpha*delta_V_lin
 
-            current_f = self.to_value(V_final + delta_V_lin_scaled)
+            new_V_final, clipped = self.clip_input(V_final + delta_V_lin_scaled)
+
+            current_f = self.to_value(new_V_final)
             delta_f = setpoint - current_f
 
-            V_final += delta_V_lin_scaled
+            V_final = new_V_final
 
         self.history = real_history
         self.history_object.update(V_final)
