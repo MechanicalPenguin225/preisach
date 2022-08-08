@@ -209,3 +209,24 @@ class Preisach(History_primitive):
         beta = self.preisach_coords[:, 1]
         alpha = self.preisach_coords[:, 0]
         plt.tripcolor(beta, alpha, self.f(alpha, beta), **kwargs)
+
+    def clip_input(self, V):
+        """Clips V to input range, and also returns a boolean.
+        True = input was clipped, False = input didn't need clipping.
+
+        Inputs -----
+
+        V, float : the value to be clipped.
+
+        Outputs -----
+
+        V_clipped : float, the clipped value.
+        is_clipped : Bool, whether the input got clipped. """
+        input_min, input_max = self.bounds
+
+        if V > input_max :
+            return input_max, True
+        elif V < input_min :
+            return input_min, True
+        else :
+            return V, False
