@@ -77,6 +77,15 @@ class History_primitive():
 
             return corners
 
+
+
+# INTEGRAL-BASED IMPLEMENTATION (it slo)
+class Integral_Preisach(History_primitive):
+    def __init__(self, mu, bounds):
+        super().__init__()
+        self.mu = mu
+        self.bounds = tuple(bounds)
+
     def make_integrand_bound_functions(self):
         hist = self.history
         flipped_hist = np.flip(hist, axis = 0)
@@ -119,15 +128,7 @@ class History_primitive():
                         return prev_M # no neeed for an "else" clause cause this should make a good partition of the whole interval
 
         return spin_up_max_beta_bound, spin_down_min_alpha_bound
-
-# INTEGRAL-BASED IMPLEMENTATION (it slo)
-class Integral_Preisach(History_primitive):
-    def __init__(self, mu, bounds):
-        super().__init__()
-        self.mu = mu
-        self.bounds = tuple(bounds)
-
-
+    
     def get_value(self):
         hist = self.history
         bounds = self.bounds
