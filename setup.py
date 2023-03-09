@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="preisach",  # Replace with your own username
-    version="0.0",
+    version="0.1",
     author="Lou Bernabeu",
     author_email="bernabeu.lou@gmail.com",
     description="A Python package to numerically implement the Preisach model of hysteresis.",
